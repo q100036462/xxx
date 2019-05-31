@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xxx.xxx.mapper.DeptMapper">
+
+    <select id="findAllDept" resultType="DeptDTO" parameterType="Dept">
+        select
+            d.dept_id AS deptId,
+            d.dept_name AS deptName,
+            d.dept_address AS deptAddress,
+            d.starttime AS starttime,
+            d.endtime AS endtime,
+            d.type AS type,
+            d.dept_worknumber AS "deptWorknumber",
+            u.name AS "deptWorknumberName"
+        from
+          dept d
+        left join user u on u.id = d.dept_worknumber
+        <where>
+            d.del_flag = 0
+            <if test="deptName != null and deptName != ''">
+                and d.dept_name like concat('%',#{deptName},'%')
+            </if>
+            <if test="type != null">
+                and d.type = #{type}
+            </if>
+        </where>
+    </select>
+
+    <select id="findMaxId" resultType="java.lang.Integer">
+        select max(id) from user
+    </select>
+
+    <select id="selectRolesByUsername" resultType="java.lang.String" parameterType="java.lang.String">
+        select
+          role_name AS roleName
+        from role r
+          left join user u on u.role_id = r.role_id
+        where
+          u.username = #{username}
+    </select>
+
+
+</mapper>

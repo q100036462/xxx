@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xxx.xxx.mapper.LeaveMapper">
+
+    <select id="selectAllLeave" resultType="LeavelDTO">
+        select
+          a.leave_id AS leaveId,
+          a.user_id AS userId,
+          a.leave_reson AS leaveReson,
+          a.leave_date AS leaveDate,
+          a.startdate AS startdate,
+          a.enddate AS enddate,
+          a.type AS type,
+          a.leave_worknumber AS leaveWorknumber,
+          u1.name AS userName,
+          u2.name AS leaveWorknumberName
+        from
+          leavel a
+        left join user u1 on a.user_id = u1.id
+        left join user u2 on a.leave_worknumber = u2.id
+        order by a.leave_id desc
+    </select>
+
+
+</mapper>

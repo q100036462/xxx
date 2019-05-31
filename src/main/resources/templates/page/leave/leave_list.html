@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	  xmlns:shiro="http://www.pollix.at/thymeleaf/shiro" >
+
+<head>
+	<meta charset="UTF-8">
+	<title>欢迎页面-X-admin2.0</title>
+	<meta name="renderer" content="webkit">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+	<link rel="stylesheet" href="../../../static/layui/css/layui.css" media="all">
+	<link rel="stylesheet" href="../../../static/css/font.css">
+	<link rel="stylesheet" href="../../../static/css/xadmin.css">
+	<script type="text/javascript" src="../../../static/jquery/jquery-3.2.1.min.js"></script>
+	<script type="text/javascript" src="../../../static/layui/layui.js" charset="utf-8"></script>
+</head>
+
+<body>
+<div class="x-nav">
+      <span class="layui-breadcrumb">
+        <a href="">首页</a>
+        <a href="">演示</a>
+        <a>
+          <cite>导航元素</cite>
+		</a>
+      </span>
+	<a class="layui-btn layui-btn-small" style="line-height:1.6em;margin-top:3px;float:right" href="javascript:location.replace(location.href);" title="刷新">
+		<i class="layui-icon" style="line-height:30px">刷新</i></a>
+</div>
+<div class="x-body">
+	<div class="layui-row layui-form">
+		<div class="demoTable ">
+			姓名：
+			<div class="layui-inline">
+				<input class="layui-input" name="name" id="nameSearch" autocomplete="off">
+			</div>
+			<shiro:hasRole name="superadmin">
+			工地：
+			<div class="layui-inline">
+				<select class="layui-input" name="deptId" id="deptIdSearch" autocomplete="off"  >
+					<option value=""></option>
+					<div th:each="dept,stat : ${depts}">
+						<option th:value="${dept.deptId}" th:text="${dept.deptName}"></option>
+					</div>
+				</select>
+			</div>
+			</shiro:hasRole>
+			用户状态：
+			<div class="layui-inline">
+				<select class="layui-input" name="type" id="typeSearch" autocomplete="off"  >
+					<option value=""></option>
+					<option value="0">正常</option>
+					<option value="1">请假</option>
+					<option value="2">冻结</option>
+				</select>
+			</div>
+			<button class="layui-btn" data-type="reload">搜索</button>
+		</div>
+	</div>
+	<xblock>
+		<shiro:hasRole name="superadmin"><button class="layui-btn" onclick="x_admin_show('添加用户','/toUserAdd',600,null)"><i class="layui-icon"></i>添加用户</button></shiro:hasRole>
+	</xblock>
+
+
+	<table id="table2" class="layui-table"  style="width: 800px" lay-filter="demo"></table>
+	<div id="page1"></div>
+
+</div>
+<script type="text/html" id="checkboxTpl">
+	<input type="checkbox" name="type" value="{{d.leaveId}}" lay-skin="switch" lay-text="正在请假|请假结束" lay-filter="lockDemo" {{ d.type == 1 ? 'checked' : '' }}>
+</script>
+<script>
+    layui.use(['table','form'], function(){
+        var table = layui.table;
+        var form = layui.form;
+        table.render({
+            elem: '#table2',
+            url:'/leaveList',
+            height: 'full-200',
+            cols: [
+                [
+                    {type:'checkbox',fixed: 'left'},
+                    {field:'leaveId',  width:80, title: 'ID',fixed: 'left'},
+                    {field:'userName', width:100, title: '请假人'},
+                    {field:'leaveReson', title: '请假原因'},
+                    {field:'leaveDate',  width:90, title: '请假天数'},
+                    {field:'startdate',  width:140, title: '开始时间'},
+                    {field:'enddate',  width:140, title: '结束时间'},
+                    {field:'leaveWorknumberName',  width:100, title: '负责人'},
+                    {field:'type',  width:140, title: '类型',fixed: 'right',templet: '#checkboxTpl'},
+                    {fixed:'right',width:250,title: '操作', align:'center', toolbar: '#barDemo'}
+                ]
+            ],
+            page: { //支持传入 laypage 组件的所有参数（某些参数除外，如：jump/elem） - 详见文档
+                layout: ['count', 'prev', 'page', 'next','limit', 'skip'], //自定义分页布局
+                //,curr: 5 //设定初始在第 5 页
+                groups: 5, //只显示 1 个连续页码
+                first: false ,//不显示首页
+                last: false, //不显示尾页
+				limits:[5,10,15,20]
+            },
+            id: 'testReload'
+        });
+		//**********************layui自定义搜索开始
+        var $ = layui.$, active = {
+            reload: function(){
+                var nameSearch = $('#nameSearch');
+                var deptIdSearch = $('#deptIdSearch');
+                var typeSearch = $('#typeSearch');
+                table.reload('testReload', {
+                    where: {
+                        name: nameSearch.val(),
+                        deptId: deptIdSearch.val(),
+                        type: typeSearch.val()
+                    }
+                });
+            }
+        };
+
+        $('.demoTable .layui-btn').on('click', function(){
+            var type = $(this).data('type');
+            active[type] ? active[type].call(this) : '';
+        });
+        //**********************layui自定义搜索结束
+        // form.on('submit(search)',function (data) {
+        //     console.log(data.field); //当前容器的全部表单字段，名值对形式：{name: value}
+        //     return false; //阻止表单跳转。如果需要表单跳转，去掉这段即可。
+        // });
+
+        //监听锁定操作
+        form.on('switch(lockDemo)', function(obj){
+            var id = this.value;
+            var type = 0;
+            if (obj.elem.checked){
+                type = 1;
+            }
+            $.ajax({
+                type: 'post',
+                url: '/updateLeaveTypeById',
+                data: {
+                    leaveId:id,
+                    type:type
+                },
+                success: function(data){
+                    if (data == '0'){
+                        layer.msg('请假结束');
+                    }else if (data == '1') {
+                        layer.msg('正在请假');
+                    }else if (data == 'error'){
+                        layer.msg('操作失败');
+					}
+                }
+            });
+        });
+
+        //监听工具条
+        table.on('tool(demo)', function(obj){
+            var data = obj.data;
+            if(obj.event === 'detail'){
+                x_admin_show('更改密码','/toUserPassword?id='+data.id+'&username='+data.username+'&name='+data.name,600,400);
+            } else if(obj.event === 'del'){
+                layer.confirm('真的删除么', function(index){
+                    $.ajax({
+                        type: 'post',
+                        url: '/delUser',
+                        data: {
+                            id:data.id
+                        },
+                        success: function(result){
+                            if (result == 'success'){
+                                layer.msg('删除成功');
+                                obj.del();
+                            }else{
+                                layer.msg('删除失败');
+                            }
+                        }
+                    });
+                    layer.close(index);
+                });
+            } else if(obj.event === 'edit'){
+                x_admin_show('编辑用户','/toUserEdit?id='+data.id,600,null);
+            }
+        });
+
+    });
+</script>
+<script type="text/html" id="barDemo">
+	<a class="layui-btn layui-btn-primary layui-btn-xs" lay-event="detail">更改密码</a>
+	<a class="layui-btn layui-btn-xs" lay-event="edit">用户编辑</a>
+	<a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+<script>
+
+
+
+    function x_admin_show(title,url,w,h){
+        if (title == null || title == '') {
+            title=false;
+        };
+        if (url == null || url == '') {
+            url="404.html";
+        };
+        if (w == null || w == '') {
+            w=($(window).width()*0.9);
+        };
+        if (h == null || h == '') {
+            h=($(window).height() - 50);
+        };
+        layer.open({
+            type: 2,
+            area: [w+'px', h +'px'],
+            fix: false, //不固定
+            maxmin: true,
+            shadeClose: true,
+            shade:0.4,
+            title: title,
+            content: url
+        });
+    }
+
+
+    function turnPage(url) {
+         //layer.msg(url);
+		window.location=url;
+    }
+</script>
+</body>
+
+</html>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xxx.xxx.mapper.UserMapper">
+
+    <select id="findAllUser" resultType="User">
+        select
+          u.id AS id,
+          u.username AS username,
+          u.password AS password,
+          u.name AS name,
+          u.sex AS sex,
+          u.age AS age,
+          u.idcard AS idcard,
+          u.phone AS phone,
+          u.adress AS adress,
+          u.bankcard AS bankcard,
+          u.timemoney AS timemoney,
+          u.type AS type,
+          u.role_id AS roleId,
+          u.dept_id AS deptId
+        from
+          user u
+        left join role r on r.role_id = u.role_id
+        left join dept d on d.dept_id = u.dept_id
+        <where>
+            u.del_flag = 0
+            <if test="name != null and name != ''">
+                and u.name like concat('%',#{name},'%')
+            </if>
+            <if test="deptId != null and deptId != ''">
+                and u.dept_id = #{deptId}
+            </if>
+            <if test="type != null">
+                and u.type = #{type}
+            </if>
+        </where>
+    </select>
+
+    <select id="findMaxId" resultType="java.lang.Integer">
+        select max(id) from user
+    </select>
+
+    <select id="selectRolesByUsername" resultType="java.lang.String" parameterType="java.lang.String">
+        select
+          role_name AS roleName
+        from role r
+          left join user u on u.role_id = r.role_id
+        where
+          u.username = #{username}
+    </select>
+
+    <select id="findAllAdmin" resultType="User">
+        select
+          u.id AS id,
+          u.name AS name
+        from user u
+        where
+          u.role_id = 2
+    </select>
+
+
+</mapper>
